@@ -1,3 +1,4 @@
+//constants.js
 // Game constants
 const WIDTH = 900, HEIGHT = 600, FLOOR = HEIGHT - 30, PLATFORM_HEIGHT = 20;
 const PLAYER_SIZE = 54, PLAYER_SPEED = 5, GRAVITY = 0.7, FRICTION = 0.7;
