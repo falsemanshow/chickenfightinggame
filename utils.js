@@ -1,3 +1,4 @@
+//utils.js
 // Utility functions
 function log(msg) {
   const logDiv = document.getElementById("game-log");
@@ -69,21 +70,26 @@ function points(player, amount) {
 }
 // end of point functions
 
-// Add to utils.js
-function points(player, amount) {
-  player.points = Math.max(0, Math.min(MAX_POINTS, player.points + amount));
-  return player.points;
-}
-
-// Update handleDashDmg
-function handleDashDmg(attacker, victim, dmg) {
-  attacker.dashdmg = dmg;
-  victim.hp -= dmg;
-  if (victim.hp < 0) victim.hp = 0;
-  victim.justHit = 10;
+// In utils.js - Add this function
+function createPlaceholderSprite(color, frameCount, width, height) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width * frameCount;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
   
-  // Award attacker 1 point for landing a hit
-  points(attacker, 1);
+  for (let i = 0; i < frameCount; i++) {
+    ctx.fillStyle = color;
+    ctx.fillRect(i * width, 0, width, height);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(i * width + 2, 2, width - 4, height - 4);
+    
+    // Add frame number
+    ctx.fillStyle = '#fff';
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(i+1, i * width + width/2, height/2 + 7);
+  }
   
-  log(attacker.name + " hit " + victim.name + " with DASH for " + dmg + " damage! (+1 point, total: " + attacker.points + ")");
+  return canvas.toDataURL();
 }
