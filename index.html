@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    
   <div class="ui-row" style="margin-bottom:5px">
     <span class="bar-label" id="p1name">Player 1</span>
     <div class="hp-bar"><div class="hp-inner" id="p1hp"></div></div>
@@ -13,28 +14,25 @@
     <div class="hp-bar"><div class="hp-inner p2" id="p2hp"></div></div>
     <span class="bar-label" id="p2name">Player 2</span>
   </div>
-  
-  <!-- Points UI -->
   <div class="ui-row" style="margin-bottom:5px">
-    <span class="bar-label">Points</span>
-    <div class="points-container" id="p1points">
-      <div class="point-circle"></div>
-      <div class="point-circle"></div>
-      <div class="point-circle"></div>
-      <div class="point-circle"></div>
-      <div class="point-circle"></div>
-    </div>
-    <span class="bar-label">VS</span>
-    <div class="points-container" id="p2points">
-      <div class="point-circle"></div>
-      <div class="point-circle"></div>
-      <div class="point-circle"></div>
-      <div class="point-circle"></div>
-      <div class="point-circle"></div>
-    </div>
-    <span class="bar-label">Points</span>
+  <span class="bar-label">Points</span>
+  <div class="points-container" id="p1points">
+    <div class="point-circle"></div>
+    <div class="point-circle"></div>
+    <div class="point-circle"></div>
+    <div class="point-circle"></div>
+    <div class="point-circle"></div>
   </div>
-  
+  <span class="bar-label">VS</span>
+  <div class="points-container" id="p2points">
+    <div class="point-circle"></div>
+    <div class="point-circle"></div>
+    <div class="point-circle"></div>
+    <div class="point-circle"></div>
+    <div class="point-circle"></div>
+  </div>
+  <span class="bar-label">Points</span>
+</div>
   <div class="ui-row">
     <span class="bar-label">Dash</span>
     <div class="dash-bar"><div class="dash-inner" id="p1dash"></div></div>
@@ -53,7 +51,7 @@
   <!-- Load scripts in proper order -->
   <script src="constants.js"></script>
   <script src="utils.js"></script>
-  <script src="animations.js"></script>
+<script src="animation.js"></script>
   <script src="characters.js"></script>
   <script src="game.js"></script>
 </body>
