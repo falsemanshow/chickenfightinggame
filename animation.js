@@ -1,3 +1,4 @@
+//animation.js
 // Animation system for sprite-based character animations
 const AnimationSystem = {
   // Cache for loaded images to avoid reloading
@@ -126,29 +127,35 @@ const AnimationSystem = {
         // Don't try to draw if the image isn't loaded yet
         if (!spriteSheet.complete) return;
         
-        const frameX = (anim.currentFrame % anim.frameCount) * anim.frameWidth;
-        const frameY = anim.row * anim.frameHeight;
-        
-        ctx.save();
-        
-        // Handle facing direction and flip if needed
-        if ((facing === -1 && !anim.flipX) || (facing === 1 && anim.flipX)) {
-          ctx.translate(x + anim.frameWidth, y);
-          ctx.scale(-1, 1);
-          ctx.drawImage(
-            spriteSheet,
-            frameX, frameY, anim.frameWidth, anim.frameHeight,
-            0, 0, anim.frameWidth, anim.frameHeight
-          );
-        } else {
-          ctx.drawImage(
-            spriteSheet, 
-            frameX, frameY, anim.frameWidth, anim.frameHeight,
-            x, y, anim.frameWidth, anim.frameHeight
-          );
+        try {
+          const frameX = (anim.currentFrame % anim.frameCount) * anim.frameWidth;
+          const frameY = anim.row * anim.frameHeight;
+          
+          ctx.save();
+          
+          // Handle facing direction and flip if needed
+          if ((facing === -1 && !anim.flipX) || (facing === 1 && anim.flipX)) {
+            ctx.translate(x + anim.frameWidth, y);
+            ctx.scale(-1, 1);
+            ctx.drawImage(
+              spriteSheet,
+              frameX, frameY, anim.frameWidth, anim.frameHeight,
+              0, 0, anim.frameWidth, anim.frameHeight
+            );
+          } else {
+            ctx.drawImage(
+              spriteSheet, 
+              frameX, frameY, anim.frameWidth, anim.frameHeight,
+              x, y, anim.frameWidth, anim.frameHeight
+            );
+          }
+          
+          ctx.restore();
+        } catch (error) {
+          // If drawing fails, draw a colored rectangle instead
+          ctx.fillStyle = "#808080";
+          ctx.fillRect(x, y, anim.frameWidth || PLAYER_SIZE, anim.frameHeight || PLAYER_SIZE);
         }
-        
-        ctx.restore();
       },
       
       // Check if current animation is finished
