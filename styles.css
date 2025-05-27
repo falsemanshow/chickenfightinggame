@@ -64,23 +64,3 @@ body { background: #292d3e; margin: 0; }
   background-color: #ffeb3b;
   box-shadow: 0 0 5px #ffeb3b;
 }
-
-/* Add to styles.css */
-.points-container {
-  display: flex;
-  gap: 5px;
-}
-
-.point-circle {
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background-color: #44476a;
-  border: 2px solid #fff;
-  transition: background-color 0.3s ease;
-}
-
-.point-circle.active {
-  background-color: #ffeb3b;
-  box-shadow: 0 0 5px #ffeb3b;
-}
