@@ -1264,32 +1264,6 @@ CharacterSystem.register('vergil', {
     ctx.fillRect(this.x, this.y, this.w, this.h);
     ctx.strokeRect(this.x, this.y, this.w, this.h);
     
-    // Draw white cutting lines during 'lines' phase
-    if (this.judgementCutEffect && this.judgementCutEffect.phase === 'lines') {
-        const effect = this.judgementCutEffect;
-        
-        ctx.save();
-        ctx.globalAlpha = 0.9;
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 3;
-        ctx.shadowColor = "#ffffff";
-        ctx.shadowBlur = 10;
-        
-        // Draw each cut line
-        for (const line of effect.lines) {
-            const [x1, y1, x2, y2] = line;
-            const worldX1 = effect.cameraX + x1;
-            const worldY1 = effect.cameraY + y1;
-            const worldX2 = effect.cameraX + x2;
-            const worldY2 = effect.cameraY + y2;
-            
-            ctx.beginPath();
-            ctx.moveTo(worldX1, worldY1);
-            ctx.lineTo(worldX2, worldY2);
-            ctx.stroke();
-        }
-        ctx.restore();
-    }
 },
     
  abilities: {
