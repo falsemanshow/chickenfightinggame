@@ -4,12 +4,12 @@
 let cameraZoomEffect = {
     active: false,
     startZoom: 1,
-    targetZoom: 1.3,  // Zoom in to 1.5x during the effect
+    targetZoom: 1.5,  // Zoom in to 1.5x during the effect
     currentZoom: 1,
     phase: 'idle',    // 'zoom_in', 'hold', 'zoom_out'
     startTime: 0,
     duration: {
-        zoomIn: 4800,   // 800ms to zoom in slowly
+        zoomIn: 6300,   // 800ms to zoom in slowly
         hold: 400,     // Hold the zoom for 400ms during slide
         zoomOut: 700   // 600ms to zoom back out
     }
