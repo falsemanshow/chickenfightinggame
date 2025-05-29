@@ -2,7 +2,7 @@
 //characters.js
 const JUDGEMENT_CUT_CONSTANTS = {
     SLIDE_DURATION: 5000,        // How long (ms) shards slide before falling
-    SLIDE_SPEED: 0.0014,         // Multiplier for slide velocity per frame
+    SLIDE_SPEED: 0.001,         // Multiplier for slide velocity per frame
     FALL_INITIAL_VY: -7,        // Initial vertical velocity when shards start to fall
     FALL_VX_RANGE: 8,
      LINE_DISPLAY_DURATION: 2000              // Range for random horizontal velocity during fall
@@ -1362,9 +1362,10 @@ CharacterSystem.register('vergil', {
             this.snapCtx.restore();
             
             // ADD DELAY HERE - Trigger the effect after 2 seconds
-            setTimeout(() => {
+          
+              setTimeout(() => {
                 AbilityLibrary.judgementCut(this);
-            }, 2000);  // 2 second delay
+            }, 2000);
         }
     }
 }
