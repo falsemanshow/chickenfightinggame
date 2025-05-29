@@ -4,7 +4,8 @@ const JUDGEMENT_CUT_CONSTANTS = {
     SLIDE_DURATION: 5000,        // How long (ms) shards slide before falling
     SLIDE_SPEED: 0.0014,         // Multiplier for slide velocity per frame
     FALL_INITIAL_VY: -7,        // Initial vertical velocity when shards start to fall
-    FALL_VX_RANGE: 8            // Range for random horizontal velocity during fall
+    FALL_VX_RANGE: 8,
+     LINE_DISPLAY_DURATION: 2000              // Range for random horizontal velocity during fall
 };
 
 const CharacterSystem = {
@@ -331,7 +332,7 @@ judgementCut: function(character, costPoints = 0) {
         duration: 1200,
         startTime: performance.now(),
         shards: [],
-        phase: 'slide',
+        phase: 'lines',
         damage: 35,
         range: 200,
         knockback: { x: 0, y: 0 },
@@ -339,7 +340,8 @@ judgementCut: function(character, costPoints = 0) {
         cameraX: cx - viewW / 2,
         cameraY: cy - viewH / 2,
         viewWidth: viewW,
-        viewHeight: viewH
+        viewHeight: viewH,
+         lineStartTime: performance.now()  
     };
     
     // Geometry helper functions
@@ -1207,7 +1209,7 @@ CharacterSystem.register('vergil', {
         player.judgementCutEffect = null;
     },
     
-   update: function() {
+  update: function() {
     if (this.judgementCutCooldown > 0) {
         this.judgementCutCooldown--;
     }
@@ -1216,30 +1218,36 @@ CharacterSystem.register('vergil', {
         const effect = this.judgementCutEffect;
         const t = performance.now() - effect.startTime;
         
-        if (effect.phase === 'slide') {
-    for (let s of effect.shards) {
-        s.x += s.vx * JUDGEMENT_CUT_CONSTANTS.SLIDE_SPEED;
-        s.y += s.vy * JUDGEMENT_CUT_CONSTANTS.SLIDE_SPEED;
-        s.angle += s.vangle * JUDGEMENT_CUT_CONSTANTS.SLIDE_SPEED;
-    }
-    
-    if (t > JUDGEMENT_CUT_CONSTANTS.SLIDE_DURATION) {
-        effect.phase = 'fall';
-        for (let s of effect.shards) {
-            s.vy = JUDGEMENT_CUT_CONSTANTS.FALL_INITIAL_VY + Math.random()*2;
-            s.vx = (Math.random()-0.5) * JUDGEMENT_CUT_CONSTANTS.FALL_VX_RANGE;
+        // Show white lines first, then transition to shard movement
+        if (effect.phase === 'lines') {
+            const lineTime = performance.now() - effect.lineStartTime;
+            if (lineTime > JUDGEMENT_CUT_CONSTANTS.LINE_DISPLAY_DURATION) {
+                effect.phase = 'slide';
+                effect.startTime = performance.now(); // Reset timer for slide phase
+            }
         }
-    }
-} else if (effect.phase === 'fall') {
-            // Match reference falling physics exactly
+        else if (effect.phase === 'slide') {
             for (let s of effect.shards) {
-                s.x += s.vx;                    // Move horizontally
-                s.y += s.vy;                    // Move vertically
-                s.vy += s.g;                    // Gravity increases vertical speed
-                s.angle += s.vangle;            // Keep spinning
+                s.x += s.vx * JUDGEMENT_CUT_CONSTANTS.SLIDE_SPEED;
+                s.y += s.vy * JUDGEMENT_CUT_CONSTANTS.SLIDE_SPEED;
+                s.angle += s.vangle * JUDGEMENT_CUT_CONSTANTS.SLIDE_SPEED;
             }
             
-            // Clean up when all shards are off screen
+            if (t > JUDGEMENT_CUT_CONSTANTS.SLIDE_DURATION) {
+                effect.phase = 'fall';
+                for (let s of effect.shards) {
+                    s.vy = JUDGEMENT_CUT_CONSTANTS.FALL_INITIAL_VY + Math.random()*2;
+                    s.vx = (Math.random()-0.5) * JUDGEMENT_CUT_CONSTANTS.FALL_VX_RANGE;
+                }
+            }
+        } else if (effect.phase === 'fall') {
+            for (let s of effect.shards) {
+                s.x += s.vx;
+                s.y += s.vy;
+                s.vy += s.g;
+                s.angle += s.vangle;
+            }
+            
             const maxY = effect.viewHeight + 100;
             if (effect.shards.every(s => s.y > maxY)) {
                 this.judgementCutEffect = null;
@@ -1256,54 +1264,32 @@ CharacterSystem.register('vergil', {
     ctx.fillRect(this.x, this.y, this.w, this.h);
     ctx.strokeRect(this.x, this.y, this.w, this.h);
     
-    // Handle the judgement cut effect rendering
-   /* if (this.judgementCutEffect && this.effectCtx) {
+    // Draw white cutting lines during 'lines' phase
+    if (this.judgementCutEffect && this.judgementCutEffect.phase === 'lines') {
         const effect = this.judgementCutEffect;
-        const effectCtx = this.effectCtx;
         
-        // Clear the effect canvas
-        effectCtx.clearRect(0, 0, effect.viewWidth, effect.viewHeight);
-        
-        // Draw each shard
-        for (let s of effect.shards) {
-            effectCtx.save();
-            
-            let cx=0, cy=0;
-            for (let p of s.poly) { cx+=p[0]; cy+=p[1]; }
-            cx/=s.poly.length; cy/=s.poly.length;
-            
-            effectCtx.translate(cx + s.x, cy + s.y);
-            effectCtx.rotate(s.angle);
-            effectCtx.translate(-cx, -cy);
-            
-            effectCtx.beginPath();
-            effectCtx.moveTo(s.poly[0][0], s.poly[0][1]);
-            for (let j=1; j<s.poly.length; ++j) {
-                effectCtx.lineTo(s.poly[j][0], s.poly[j][1]);
-            }
-            effectCtx.closePath();
-            
-            effectCtx.clip();
-            effectCtx.drawImage(this.snapCanvas, 0, 0);
-            
-            // Add blue tint
-            effectCtx.fillStyle = "rgba(0, 127, 255, 0.1)";
-            effectCtx.fill();
-            
-            // Add glowing edge
-            effectCtx.strokeStyle = "#00bfff";
-            effectCtx.lineWidth = 1;
-            effectCtx.globalAlpha = 0.4;
-            effectCtx.stroke();
-            
-            effectCtx.restore();
-        }
-        
-        // Draw the effect canvas at the camera position
+        ctx.save();
         ctx.globalAlpha = 0.9;
-        ctx.drawImage(this.effectCanvas, effect.cameraX, effect.cameraY);
-        ctx.globalAlpha = 1;
-    }*/
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 3;
+        ctx.shadowColor = "#ffffff";
+        ctx.shadowBlur = 10;
+        
+        // Draw each cut line
+        for (const line of effect.lines) {
+            const [x1, y1, x2, y2] = line;
+            const worldX1 = effect.cameraX + x1;
+            const worldY1 = effect.cameraY + y1;
+            const worldX2 = effect.cameraX + x2;
+            const worldY2 = effect.cameraY + y2;
+            
+            ctx.beginPath();
+            ctx.moveTo(worldX1, worldY1);
+            ctx.lineTo(worldX2, worldY2);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
 },
     
  abilities: {
@@ -1375,8 +1361,10 @@ CharacterSystem.register('vergil', {
             
             this.snapCtx.restore();
             
-            // Trigger the effect
-            AbilityLibrary.judgementCut(this);
+            // ADD DELAY HERE - Trigger the effect after 2 seconds
+            setTimeout(() => {
+                AbilityLibrary.judgementCut(this);
+            }, 2000);  // 2 second delay
         }
     }
 }
