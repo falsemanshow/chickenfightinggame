@@ -1,5 +1,19 @@
 //game.js
 // Main game logic
+// Add these variables after your existing variables in game.js
+let cameraZoomEffect = {
+    active: false,
+    startZoom: 1,
+    targetZoom: 1.3,  // Zoom in to 1.5x during the effect
+    currentZoom: 1,
+    phase: 'idle',    // 'zoom_in', 'hold', 'zoom_out'
+    startTime: 0,
+    duration: {
+        zoomIn: 4800,   // 800ms to zoom in slowly
+        hold: 400,     // Hold the zoom for 400ms during slide
+        zoomOut: 700   // 600ms to zoom back out
+    }
+};
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
@@ -48,16 +62,19 @@ function changeCharacter(playerId, characterId) {
 
 // Example usage with number keys
 document.addEventListener("keydown", function(e) {
-  if (e.key === "1") changeCharacter(0, "gold");
+  if (e.key === "1") changeCharacter(0, "fireMage");
   if (e.key === "2") changeCharacter(0, "berry");
   if (e.key === "3") changeCharacter(0, "smasher");
-    if (e.key === "4") changeCharacter(1, "ninja");
+    if (e.key === "4") changeCharacter(0, "zombieRider");
+    if (e.key === "5") changeCharacter(0, "vergil");  // For player 1
+if (e.key === "6") changeCharacter(1, "vergil");
+    
   
   // For player 2
   if (e.key === "7") changeCharacter(1, "gold");
   if (e.key === "8") changeCharacter(1, "berry");
   if (e.key === "9") changeCharacter(1, "smasher");
-  if (e.key === "0") changeCharacter(1, "ninja");
+  if (e.key === "0") changeCharacter(1, "zombieRider");
 });
 
 // Set up keyboard handling
@@ -275,36 +292,97 @@ function handleDashAndBlockDamage() {
 }
 
 // CAMERA MOVEMENT
+// CAMERA MOVEMENT - Original version
+// Replace your existing getCamera function with this:
 function getCamera() {
-  const p1 = players[0], p2 = players[1];
-  const x1 = p1.x + p1.w / 2, y1 = p1.y + p1.h / 2;
-  const x2 = p2.x + p2.w / 2, y2 = p2.y + p2.h / 2;
+    const p1 = players[0], p2 = players[1];
+    const x1 = p1.x + p1.w / 2, y1 = p1.y + p1.h / 2;
+    const x2 = p2.x + p2.w / 2, y2 = p2.y + p2.h / 2;
 
-  // Center between both players
-  let cx = (x1 + x2) / 2;
-  let cy = (y1 + y2) / 2;
+    // Center between both players
+    let cx = (x1 + x2) / 2;
+    let cy = (y1 + y2) / 2;
 
-  // Add padding around players
-  const extra = 80;
-  const playersW = Math.abs(x2 - x1) + p1.w + p2.w + extra;
-  const playersH = Math.abs(y2 - y1) + p1.h + p2.h + extra;
+    // Add padding around players
+    const extra = 80;
+    const playersW = Math.abs(x2 - x1) + p1.w + p2.w + extra;
+    const playersH = Math.abs(y2 - y1) + p1.h + p2.h + extra;
 
-  // Zoom so both players fit
-  const zoomW = canvas.width / playersW;
-  const zoomH = canvas.height / playersH;
-  let zoom = Math.min(zoomW, zoomH);
+    // Zoom so both players fit
+    const zoomW = canvas.width / playersW;
+    const zoomH = canvas.height / playersH;
+    let baseZoom = Math.min(zoomW, zoomH);
 
-  // Clamp zoom
-  const minZoom = Math.max(canvas.width / WIDTH, canvas.height / HEIGHT);
-  const maxZoom = 1.8;
-  zoom = Math.max(minZoom, Math.min(maxZoom, zoom));
+    // Clamp base zoom
+    const minZoom = Math.max(canvas.width / WIDTH, canvas.height / HEIGHT);
+    const maxZoom = 1.8;
+    baseZoom = Math.max(minZoom, Math.min(maxZoom, baseZoom));
+    
+    // Apply zoom effect if active
+    let finalZoom = baseZoom;
+    if (cameraZoomEffect.active) {
+        finalZoom = baseZoom * cameraZoomEffect.currentZoom;
+    }
 
-  // Keep camera within stage bounds
-  const viewW = canvas.width / zoom, viewH = canvas.height / zoom;
-  cx = Math.max(viewW / 2, Math.min(WIDTH - viewW / 2, cx));
-  cy = Math.max(viewH / 2, Math.min(HEIGHT - viewH / 2, cy));
+    // Keep camera within stage bounds
+    const viewW = canvas.width / finalZoom, viewH = canvas.height / finalZoom;
+    cx = Math.max(viewW / 2, Math.min(WIDTH - viewW / 2, cx));
+    cy = Math.max(viewH / 2, Math.min(HEIGHT - viewH / 2, cy));
 
-  return { cx, cy, zoom };
+    return { cx, cy, zoom: finalZoom };
+}
+
+function startCameraZoomEffect() {
+    cameraZoomEffect.active = true;
+    cameraZoomEffect.phase = 'zoom_in';
+    cameraZoomEffect.startTime = performance.now();
+    cameraZoomEffect.startZoom = 1;
+    cameraZoomEffect.currentZoom = 1;
+}
+
+function updateCameraZoomEffect() {
+    if (!cameraZoomEffect.active) return;
+    
+    const now = performance.now();
+    const elapsed = now - cameraZoomEffect.startTime;
+    
+    switch (cameraZoomEffect.phase) {
+        case 'zoom_in':
+            // Slowly zoom in with easing
+            const zoomProgress = Math.min(elapsed / cameraZoomEffect.duration.zoomIn, 1);
+            const easeProgress = 1 - Math.pow(1 - zoomProgress, 3); // Ease out cubic
+            cameraZoomEffect.currentZoom = 1 + (cameraZoomEffect.targetZoom - 1) * easeProgress;
+            
+            if (elapsed >= cameraZoomEffect.duration.zoomIn) {
+                cameraZoomEffect.phase = 'hold';
+                cameraZoomEffect.startTime = now;
+            }
+            break;
+            
+        case 'hold':
+            // Hold the zoom at target level
+            cameraZoomEffect.currentZoom = cameraZoomEffect.targetZoom;
+            
+            if (elapsed >= cameraZoomEffect.duration.hold) {
+                cameraZoomEffect.phase = 'zoom_out';
+                cameraZoomEffect.startTime = now;
+            }
+            break;
+            
+        case 'zoom_out':
+            // Zoom back out smoothly
+            const outProgress = Math.min(elapsed / cameraZoomEffect.duration.zoomOut, 1);
+            const easeOutProgress = Math.pow(outProgress, 2); // Ease in quadratic
+            cameraZoomEffect.currentZoom = cameraZoomEffect.targetZoom - (cameraZoomEffect.targetZoom - 1) * easeOutProgress;
+            
+            if (elapsed >= cameraZoomEffect.duration.zoomOut) {
+                // Effect complete
+                cameraZoomEffect.active = false;
+                cameraZoomEffect.phase = 'idle';
+                cameraZoomEffect.currentZoom = 1;
+            }
+            break;
+    }
 }
 
 function draw() {
@@ -392,6 +470,58 @@ function draw() {
       ctx.restore();
     }
   }
+  
+  
+  // NOW render Judgement Cut effects AFTER all players
+  for (let p of players) {
+    if (p.judgementCutEffect && p.effectCtx) {
+      const effect = p.judgementCutEffect;
+      const effectCtx = p.effectCtx;
+      
+      // Clear the effect canvas
+      effectCtx.clearRect(0, 0, effect.viewWidth, effect.viewHeight);
+      
+      // Draw each shard
+      for (let s of effect.shards) {
+        effectCtx.save();
+        
+        let cx=0, cy=0;
+        for (let pt of s.poly) { cx+=pt[0]; cy+=pt[1]; }
+        cx/=s.poly.length; cy/=s.poly.length;
+        
+        effectCtx.translate(cx + s.x, cy + s.y);
+        effectCtx.rotate(s.angle);
+        effectCtx.translate(-cx, -cy);
+        
+        effectCtx.beginPath();
+        effectCtx.moveTo(s.poly[0][0], s.poly[0][1]);
+        for (let j=1; j<s.poly.length; ++j) {
+          effectCtx.lineTo(s.poly[j][0], s.poly[j][1]);
+        }
+        effectCtx.closePath();
+        
+        effectCtx.clip();
+        effectCtx.drawImage(p.snapCanvas, 0, 0);
+        
+        // Add blue tint
+        effectCtx.fillStyle = "rgba(0, 127, 255, 0.1)";
+        effectCtx.fill();
+        
+        // Add glowing edge
+        effectCtx.strokeStyle = "#00bfff";
+        effectCtx.lineWidth = 1;
+        effectCtx.globalAlpha = 0.4;
+        effectCtx.stroke();
+        
+        effectCtx.restore();
+      }
+      
+      // Draw the effect canvas at the camera position
+      ctx.globalAlpha = 0.9;
+      ctx.drawImage(p.effectCanvas, effect.cameraX, effect.cameraY);
+      ctx.globalAlpha = 1;
+    }
+  }
   ctx.restore(); // end camera transform
 }
 
@@ -419,8 +549,10 @@ function updateUI() {
   }
 }
 
+// Replace your existing gameLoop function with this:
 function gameLoop() {
   handleKeyEvents();
+  updateCameraZoomEffect(); // Add this line
   for (let i = 0; i < players.length; i++) {
     let p = players[i];
     if (p.justHit > 0) p.justHit--;
