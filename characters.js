@@ -6,8 +6,8 @@ const JUDGEMENT_CUT_CONSTANTS = {
     FALL_INITIAL_VY: -7,
     FALL_VX_RANGE: 8,
     LINE_DISPLAY_DURATION: 2000,
-    LINE_APPEAR_INTERVAL: 150,  // Time between each line appearing (ms)
-    FIRST_THREE_INTERVAL: 200,  // Slower interval for first 3 lines
+    LINE_APPEAR_INTERVAL: 50,  // Time between each line appearing (ms)
+    FIRST_THREE_INTERVAL: 50,  // Slower interval for first 3 lines
     REMAINING_LINES_DELAY: 600  // Extra delay before remaining lines appear together
 };
 
@@ -330,7 +330,6 @@ judgementCut: function(character, costPoints = 0) {
             [0, viewH * 0.75, viewW, viewH * 0.19],
             [0, viewH * 0.2, viewW * 0.55, viewH],
             [0, viewH, viewW, viewH * 0.25],
-
             [viewW * 0.73, 0, viewW, viewH],
             [viewW, 0, viewW * 0.34, viewH],
             [viewW, 0, viewW * 0.03, viewH],
