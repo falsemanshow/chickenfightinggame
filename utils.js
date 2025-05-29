@@ -93,3 +93,4 @@ function createPlaceholderSprite(color, frameCount, width, height) {
   
   return canvas.toDataURL();
 }
+
