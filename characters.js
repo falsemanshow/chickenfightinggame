@@ -281,6 +281,7 @@ const AbilityLibrary = {
 
     // Add to AbilityLibrary in characters.js
 // Update the AbilityLibrary.judgementCut function
+// First, modify the judgementCut function in AbilityLibrary (around line 284)
 judgementCut: function(character, costPoints = 0) {
     if (character.points < costPoints || character.judgementCutCooldown > 0) return false;
     
@@ -308,7 +309,7 @@ judgementCut: function(character, costPoints = 0) {
     // Set cooldown
     character.judgementCutCooldown = 120;
     
-    // Effect configuration - lines relative to camera view
+    // STEP 1: Show lines immediately
     const effect = {
         lines: [
             [0, viewH * 0.2, viewW, viewH * 0.08],
@@ -329,106 +330,114 @@ judgementCut: function(character, costPoints = 0) {
             [viewW, 0, viewW * 0.34, viewH],
             [viewW, 0, viewW * 0.03, viewH]
         ],
-        duration: 1200,
-        startTime: performance.now(),
-        shards: [],
-        phase: 'lines',
+        phase: 'lines',  // Start with lines
         damage: 35,
         range: 200,
         knockback: { x: 0, y: 0 },
-        // Store camera info for rendering
         cameraX: cx - viewW / 2,
         cameraY: cy - viewH / 2,
         viewWidth: viewW,
         viewHeight: viewH,
-         lineStartTime: performance.now()  
+        shards: []  // Empty initially
     };
-    
-    // Geometry helper functions
-    const helpers = {
-        lineSide: function(line, pt) {
-            const [x1,y1,x2,y2] = line;
-            return (x2-x1)*(pt[1]-y1)-(y2-y1)*(pt[0]-x1);
-        },
-        
-        segLineIntersection: function(a, b, line) {
-            const [x1,y1,x2,y2] = line;
-            const x3 = a[0], y3 = a[1], x4 = b[0], y4 = b[1];
-            const denom = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4);
-            if (Math.abs(denom)<1e-8) return null;
-            const px = ((x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4))/denom;
-            const py = ((x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4))/denom;
-            const between = (a,b,c) => a>=Math.min(b,c)-1e-6 && a<=Math.max(b,c)+1e-6;
-            if (between(px,a[0],b[0])&&between(py,a[1],b[1])) return [px,py];
-            return null;
-        },
-        
-        splitPolygonByLine: function(poly, line) {
-            let left=[], right=[];
-            for (let i=0;i<poly.length;++i) {
-                let a = poly[i], b = poly[(i+1)%poly.length];
-                let aside = this.lineSide(line, a);
-                let bside = this.lineSide(line, b);
-                if (aside >= 0) left.push(a);
-                if (aside <= 0) right.push(a);
-                if ((aside > 0 && bside < 0) || (aside < 0 && bside > 0)) {
-                    let ipt = this.segLineIntersection(a, b, line);
-                    if (ipt) { left.push(ipt); right.push(ipt); }
-                }
-            }
-            if (left.length>2) {
-                left = left.filter((p,i,arr)=>
-                    i==0||Math.abs(p[0]-arr[i-1][0])>1e-5||Math.abs(p[1]-arr[i-1][1])>1e-5
-                );
-            } else left = null;
-            if (right.length>2) {
-                right = right.filter((p,i,arr)=>
-                    i==0||Math.abs(p[0]-arr[i-1][0])>1e-5||Math.abs(p[1]-arr[i-1][1])>1e-5
-                );
-            } else right = null;
-            return [left, right];
-        },
-        
-        shatterPolygons: function(lines) {
-            let initial = [[ [0,0], [WIDTH,0], [WIDTH,HEIGHT], [0,HEIGHT] ]];
-            for (let line of lines) {
-                let next = [];
-                for (let poly of initial) {
-                    let [left, right] = this.splitPolygonByLine(poly, line);
-                    if (left) next.push(left);
-                    if (right) next.push(right);
-                }
-                initial = next;
-            }
-            return initial;
-        }
-    };
-    
-    // Initialize effect shards
-    const polys = helpers.shatterPolygons.call(helpers, effect.lines);
-    // In the effect creation part, replace the shard creation:
-effect.shards = polys.map(poly => {
-    let cx=0, cy=0;
-    for (let p of poly) { cx+=p[0]; cy+=p[1]; }
-    cx/=poly.length; cy/=poly.length;
-    
-    // Match the reference code exactly
-    let dir = Math.random() < 0.5 ? -0.8 : 0.8;
-    return {
-        poly,
-        x: 0, y: 0,
-        vx: dir * (18 + Math.random()*10),         // Exact same as reference
-        vy: (Math.random()-0.5)*10,                // Exact same as reference
-        g: 1.10 + Math.random()*0.2,               // Exact same as reference
-        angle: (Math.random()-0.5)*0.2,            // Exact same as reference
-        vangle: (Math.random()-0.5)*0.12 + (cx-effect.viewWidth/2)*0.0003 // Adjusted for camera width
-    };
-});
     
     // Store effect in character
     character.judgementCutEffect = effect;
     
-    // Deal damage to opponents in range
+    // STEP 2: After lines display duration, hide lines and prepare shards
+    setTimeout(() => {
+        if (character.judgementCutEffect) {
+            character.judgementCutEffect.phase = 'preparing'; // Hide lines, prepare shards
+            
+            // Generate shards but don't show them yet
+            const helpers = {
+                lineSide: function(line, pt) {
+                    const [x1,y1,x2,y2] = line;
+                    return (x2-x1)*(pt[1]-y1)-(y2-y1)*(pt[0]-x1);
+                },
+                
+                segLineIntersection: function(a, b, line) {
+                    const [x1,y1,x2,y2] = line;
+                    const x3 = a[0], y3 = a[1], x4 = b[0], y4 = b[1];
+                    const denom = (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4);
+                    if (Math.abs(denom)<1e-8) return null;
+                    const px = ((x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4))/denom;
+                    const py = ((x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4))/denom;
+                    const between = (a,b,c) => a>=Math.min(b,c)-1e-6 && a<=Math.max(b,c)+1e-6;
+                    if (between(px,a[0],b[0])&&between(py,a[1],b[1])) return [px,py];
+                    return null;
+                },
+                
+                splitPolygonByLine: function(poly, line) {
+                    let left=[], right=[];
+                    for (let i=0;i<poly.length;++i) {
+                        let a = poly[i], b = poly[(i+1)%poly.length];
+                        let aside = this.lineSide(line, a);
+                        let bside = this.lineSide(line, b);
+                        if (aside >= 0) left.push(a);
+                        if (aside <= 0) right.push(a);
+                        if ((aside > 0 && bside < 0) || (aside < 0 && bside > 0)) {
+                            let ipt = this.segLineIntersection(a, b, line);
+                            if (ipt) { left.push(ipt); right.push(ipt); }
+                        }
+                    }
+                    if (left.length>2) {
+                        left = left.filter((p,i,arr)=>
+                            i==0||Math.abs(p[0]-arr[i-1][0])>1e-5||Math.abs(p[1]-arr[i-1][1])>1e-5
+                        );
+                    } else left = null;
+                    if (right.length>2) {
+                        right = right.filter((p,i,arr)=>
+                            i==0||Math.abs(p[0]-arr[i-1][0])>1e-5||Math.abs(p[1]-arr[i-1][1])>1e-5
+                        );
+                    } else right = null;
+                    return [left, right];
+                },
+                
+                shatterPolygons: function(lines) {
+                    let initial = [[ [0,0], [WIDTH,0], [WIDTH,HEIGHT], [0,HEIGHT] ]];
+                    for (let line of lines) {
+                        let next = [];
+                        for (let poly of initial) {
+                            let [left, right] = this.splitPolygonByLine(poly, line);
+                            if (left) next.push(left);
+                            if (right) next.push(right);
+                        }
+                        initial = next;
+                    }
+                    return initial;
+                }
+            };
+            
+            const polys = helpers.shatterPolygons.call(helpers, effect.lines);
+            character.judgementCutEffect.shards = polys.map(poly => {
+                let cx=0, cy=0;
+                for (let p of poly) { cx+=p[0]; cy+=p[1]; }
+                cx/=poly.length; cy/=poly.length;
+                
+                let dir = Math.random() < 0.5 ? -0.8 : 0.8;
+                return {
+                    poly,
+                    x: 0, y: 0,
+                    vx: dir * (18 + Math.random()*10),
+                    vy: (Math.random()-0.5)*10,
+                    g: 1.10 + Math.random()*0.2,
+                    angle: (Math.random()-0.5)*0.2,
+                    vangle: (Math.random()-0.5)*0.12 + (cx-effect.viewWidth/2)*0.0003
+                };
+            });
+        }
+    }, JUDGEMENT_CUT_CONSTANTS.LINE_DISPLAY_DURATION);  // 2000ms
+    
+    // STEP 3: After additional delay, start shard animation
+    setTimeout(() => {
+        if (character.judgementCutEffect) {
+            character.judgementCutEffect.phase = 'slide';
+            character.judgementCutEffect.startTime = performance.now();
+        }
+    }, JUDGEMENT_CUT_CONSTANTS.LINE_DISPLAY_DURATION + 500);  // 2500ms total (lines + 500ms pause)
+    
+    // Deal damage to opponents in range (immediate)
     for (let i = 0; i < players.length; i++) {
         const opponent = players[i];
         if (opponent !== character && opponent.alive) {
@@ -437,15 +446,11 @@ effect.shards = polys.map(poly => {
             const distance = Math.sqrt(dx*dx + dy*dy);
             
             if (distance < effect.range) {
-                // Apply damage with distance falloff
                 const damageMultiplier = 1 - (distance / effect.range);
                 const damage = Math.round(effect.damage * damageMultiplier);
                 opponent.hp -= damage;
                 opponent.justHit = 10;
-                
-                // Apply knockback
                 knockback(character, opponent, effect.knockback.x, effect.knockback.y);
-                
                 log(`${character.name}'s Judgement Cut hit ${opponent.name} for ${damage} damage!`);
             }
         }
@@ -1209,24 +1214,18 @@ CharacterSystem.register('vergil', {
         player.judgementCutEffect = null;
     },
     
-  update: function() {
+ update: function() {
     if (this.judgementCutCooldown > 0) {
         this.judgementCutCooldown--;
     }
 
     if (this.judgementCutEffect) {
         const effect = this.judgementCutEffect;
-        const t = performance.now() - effect.startTime;
         
-        // Show white lines first, then transition to shard movement
-        if (effect.phase === 'lines') {
-            const lineTime = performance.now() - effect.lineStartTime;
-            if (lineTime > JUDGEMENT_CUT_CONSTANTS.LINE_DISPLAY_DURATION) {
-                effect.phase = 'slide';
-                effect.startTime = performance.now(); // Reset timer for slide phase
-            }
-        }
-        else if (effect.phase === 'slide') {
+        // Only handle slide and fall phases (lines and preparing are handled by setTimeout)
+        if (effect.phase === 'slide') {
+            const t = performance.now() - effect.startTime;
+            
             for (let s of effect.shards) {
                 s.x += s.vx * JUDGEMENT_CUT_CONSTANTS.SLIDE_SPEED;
                 s.y += s.vy * JUDGEMENT_CUT_CONSTANTS.SLIDE_SPEED;
@@ -1253,6 +1252,7 @@ CharacterSystem.register('vergil', {
                 this.judgementCutEffect = null;
             }
         }
+        // 'lines' and 'preparing' phases don't need animation updates
     }
 },
     
