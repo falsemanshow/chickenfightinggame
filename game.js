@@ -483,8 +483,9 @@ function draw() {
       ctx.shadowColor = "#ffffff";
       ctx.shadowBlur = 10;
       
-      // Draw each cut line
-      for (const line of effect.lines) {
+        // Draw only the visible lines
+    for (let i = 0; i < Math.min(effect.visibleLines, effect.lines.length); i++) {
+        const line = effect.lines[i];
         const [x1, y1, x2, y2] = line;
         const worldX1 = effect.cameraX + x1;
         const worldY1 = effect.cameraY + y1;
@@ -495,7 +496,7 @@ function draw() {
         ctx.moveTo(worldX1, worldY1);
         ctx.lineTo(worldX2, worldY2);
         ctx.stroke();
-      }
+    }
       
       ctx.restore();
     }
