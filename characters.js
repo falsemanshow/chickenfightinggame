@@ -1,11 +1,14 @@
 // 1. Base Character System (Keep your existing system)
 //characters.js
 const JUDGEMENT_CUT_CONSTANTS = {
-    SLIDE_DURATION: 5000,        // How long (ms) shards slide before falling
-    SLIDE_SPEED: 0.001,         // Multiplier for slide velocity per frame
-    FALL_INITIAL_VY: -7,        // Initial vertical velocity when shards start to fall
+    SLIDE_DURATION: 5000,
+    SLIDE_SPEED: 0.001,
+    FALL_INITIAL_VY: -7,
     FALL_VX_RANGE: 8,
-     LINE_DISPLAY_DURATION: 2000              // Range for random horizontal velocity during fall
+    LINE_DISPLAY_DURATION: 2000,
+    LINE_APPEAR_INTERVAL: 150,  // Time between each line appearing (ms)
+    FIRST_THREE_INTERVAL: 200,  // Slower interval for first 3 lines
+    REMAINING_LINES_DELAY: 600  // Extra delay before remaining lines appear together
 };
 
 const CharacterSystem = {
@@ -312,7 +315,27 @@ judgementCut: function(character, costPoints = 0) {
     // STEP 1: Show lines immediately
     const effect = {
         lines: [
+            //sequence line
+                        [0, viewH * 0.07, viewW, viewH * 0.82],
+            [0, viewH * 0.29, viewW, viewH],
+            [0, viewH * 0.52, viewW * 0.82, viewH],
+            [0, viewH * 0.88, viewW, viewH * 0.8],
+            [0, viewH * 0.92, viewW, viewH * 0.51],
+            [viewW * 0.16, 0, viewW, viewH],
+            [viewW * 0.22, 0, viewW, viewH * 0.73],
+            [viewW * 0.3, 0, viewW, viewH * 0.48],
             [0, viewH * 0.2, viewW, viewH * 0.08],
+            [0, viewH * 0.12, viewW, viewH * 0.45],
+            [0, viewH * 0.55, viewW, viewH * 0.23],
+            [0, viewH * 0.75, viewW, viewH * 0.19],
+            [0, viewH * 0.2, viewW * 0.55, viewH],
+            [0, viewH, viewW, viewH * 0.25],
+
+            [viewW * 0.73, 0, viewW, viewH],
+            [viewW, 0, viewW * 0.34, viewH],
+            [viewW, 0, viewW * 0.03, viewH],
+            //white  line
+              [0, viewH * 0.2, viewW, viewH * 0.08],
             [0, viewH * 0.12, viewW, viewH * 0.45],
             [0, viewH * 0.55, viewW, viewH * 0.23],
             [0, viewH * 0.75, viewW, viewH * 0.19],
@@ -328,9 +351,9 @@ judgementCut: function(character, costPoints = 0) {
             [viewW * 0.3, 0, viewW, viewH * 0.48],
             [viewW * 0.73, 0, viewW, viewH],
             [viewW, 0, viewW * 0.34, viewH],
-            [viewW, 0, viewW * 0.03, viewH]
+            [viewW, 0, viewW * 0.03, viewH],
         ],
-        phase: 'lines',  // Start with lines
+        phase: 'lines',
         damage: 35,
         range: 200,
         knockback: { x: 0, y: 0 },
@@ -338,11 +361,28 @@ judgementCut: function(character, costPoints = 0) {
         cameraY: cy - viewH / 2,
         viewWidth: viewW,
         viewHeight: viewH,
-        shards: []  // Empty initially
+        shards: [],
+        visibleLines: 0  // ADD THIS LINE
     };
     
-    // Store effect in character
+// Store effect in character
     character.judgementCutEffect = effect;
+    
+    // NEW: Schedule first three lines to appear one by one
+    for (let i = 0; i < 7; i++) {
+        setTimeout(() => {
+            if (character.judgementCutEffect && character.judgementCutEffect.phase === 'lines') {
+                character.judgementCutEffect.visibleLines = i + 1;
+            }
+        }, i * JUDGEMENT_CUT_CONSTANTS.FIRST_THREE_INTERVAL);
+    }
+    
+    // NEW: Schedule remaining lines to appear all at once after delay
+    setTimeout(() => {
+        if (character.judgementCutEffect && character.judgementCutEffect.phase === 'lines') {
+            character.judgementCutEffect.visibleLines = effect.lines.length;
+        }
+    }, 3 * JUDGEMENT_CUT_CONSTANTS.FIRST_THREE_INTERVAL + JUDGEMENT_CUT_CONSTANTS.REMAINING_LINES_DELAY);
     
     // STEP 2: After lines display duration, hide lines and prepare shards
     setTimeout(() => {
