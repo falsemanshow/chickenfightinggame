@@ -5,10 +5,10 @@ const JUDGEMENT_CUT_CONSTANTS = {
     SLIDE_SPEED: 0.001,
     FALL_INITIAL_VY: -7,
     FALL_VX_RANGE: 8,
-    LINE_DISPLAY_DURATION: 2000,
+    LINE_DISPLAY_DURATION: 1100,
     LINE_APPEAR_INTERVAL: 50,  // Time between each line appearing (ms)
     FIRST_THREE_INTERVAL: 50,  // Slower interval for first 3 lines
-    REMAINING_LINES_DELAY: 600  // Extra delay before remaining lines appear together
+    REMAINING_LINES_DELAY: 200  // Extra delay before remaining lines appear together
 };
 
 const CharacterSystem = {
@@ -192,7 +192,7 @@ const AbilityLibrary = {
             w: 12,
             h: 12,
             color: "#e74c3c",
-            damage: 12,
+            damage: 3,
             trail: []
         };
         
@@ -212,7 +212,7 @@ const AbilityLibrary = {
         return false;
     },
 
-    flameDash: function(character, costPoints = 1) {
+    flameDash: function(character, costPoints = 0) {
         if (character.points >= costPoints && character.onGround) {
             points(character, -costPoints);
             character.vy = -JUMP_VEL * 1.3;
@@ -316,7 +316,7 @@ judgementCut: function(character, costPoints = 0) {
     const effect = {
         lines: [
             //sequence line
-                        [0, viewH * 0.07, viewW, viewH * 0.82],
+           [0, viewH * 0.07, viewW, viewH * 0.82],
             [0, viewH * 0.29, viewW, viewH],
             [0, viewH * 0.52, viewW * 0.82, viewH],
             [0, viewH * 0.88, viewW, viewH * 0.8],
@@ -333,8 +333,9 @@ judgementCut: function(character, costPoints = 0) {
             [viewW * 0.73, 0, viewW, viewH],
             [viewW, 0, viewW * 0.34, viewH],
             [viewW, 0, viewW * 0.03, viewH],
-            //white  line
-              [0, viewH * 0.2, viewW, viewH * 0.08],
+            
+            //line will be cut 
+               /*[0, viewH * 0.2, viewW, viewH * 0.08],
             [0, viewH * 0.12, viewW, viewH * 0.45],
             [0, viewH * 0.55, viewW, viewH * 0.23],
             [0, viewH * 0.75, viewW, viewH * 0.19],
@@ -350,11 +351,12 @@ judgementCut: function(character, costPoints = 0) {
             [viewW * 0.3, 0, viewW, viewH * 0.48],
             [viewW * 0.73, 0, viewW, viewH],
             [viewW, 0, viewW * 0.34, viewH],
-            [viewW, 0, viewW * 0.03, viewH],
+            [viewW, 0, viewW * 0.03, viewH],*/
+           
         ],
         phase: 'lines',
         damage: 35,
-        range: 200,
+        range: 500,
         knockback: { x: 0, y: 0 },
         cameraX: cx - viewW / 2,
         cameraY: cy - viewH / 2,
@@ -463,6 +465,7 @@ judgementCut: function(character, costPoints = 0) {
                     g: 1.10 + Math.random()*0.2,
                     angle: (Math.random()-0.5)*0.2,
                     vangle: (Math.random()-0.5)*0.12 + (cx-effect.viewWidth/2)*0.0003
+                    
                 };
             });
         }
@@ -965,12 +968,12 @@ CharacterSystem.register('fireMage', {
             
             // Fire shield
             if (key === controls.down && this.onGround) {
-                AbilityLibrary.fireShield(this, 1);
+                AbilityLibrary.fireShield(this, 0);
             }
             
             // Flame dash
             if (key === controls.up) {
-                AbilityLibrary.flameDash(this, 1);
+                AbilityLibrary.flameDash(this, 0);
             }
         },
 
@@ -1273,6 +1276,7 @@ CharacterSystem.register('vergil', {
             
             if (t > JUDGEMENT_CUT_CONSTANTS.SLIDE_DURATION) {
                 effect.phase = 'fall';
+                
                 for (let s of effect.shards) {
                     s.vy = JUDGEMENT_CUT_CONSTANTS.FALL_INITIAL_VY + Math.random()*2;
                     s.vx = (Math.random()-0.5) * JUDGEMENT_CUT_CONSTANTS.FALL_VX_RANGE;
@@ -1285,7 +1289,6 @@ CharacterSystem.register('vergil', {
                 s.vy += s.g;
                 s.angle += s.vangle;
             }
-            
             const maxY = effect.viewHeight + 100;
             if (effect.shards.every(s => s.y > maxY)) {
                 this.judgementCutEffect = null;
