@@ -2,9 +2,9 @@
 //characters.js
 const JUDGEMENT_CUT_CONSTANTS = {
     SLIDE_DURATION: 5000,
-    SLIDE_SPEED: 0.001,
+    SLIDE_SPEED: 1,
     FALL_INITIAL_VY: -7,
-    FALL_VX_RANGE: 8,
+    FALL_VX_RANGE: 3,
     LINE_DISPLAY_DURATION: 1100,
     LINE_APPEAR_INTERVAL: 50,  // Time between each line appearing (ms)
     FIRST_THREE_INTERVAL: 50,  // Slower interval for first 3 lines
@@ -283,12 +283,13 @@ const AbilityLibrary = {
     },
 
     // Add to AbilityLibrary in characters.js
-// Update the AbilityLibrary.judgementCut function
-// First, modify the judgementCut function in AbilityLibrary (around line 284)
+//judgementcutend ability
 judgementCut: function(character, costPoints = 0) {
     if (character.points < costPoints || character.judgementCutCooldown > 0) return false;
     
-    // Start the dramatic camera zoom effect
+   
+    
+    // Zoom
     startCameraZoomEffect();
     
     // Get current camera state
@@ -333,43 +334,22 @@ judgementCut: function(character, costPoints = 0) {
             [viewW * 0.73, 0, viewW, viewH],
             [viewW, 0, viewW * 0.34, viewH],
             [viewW, 0, viewW * 0.03, viewH],
-            
-            //line will be cut 
-               /*[0, viewH * 0.2, viewW, viewH * 0.08],
-            [0, viewH * 0.12, viewW, viewH * 0.45],
-            [0, viewH * 0.55, viewW, viewH * 0.23],
-            [0, viewH * 0.75, viewW, viewH * 0.19],
-            [0, viewH * 0.2, viewW * 0.55, viewH],
-            [0, viewH, viewW, viewH * 0.25],
-            [0, viewH * 0.07, viewW, viewH * 0.82],
-            [0, viewH * 0.29, viewW, viewH],
-            [0, viewH * 0.52, viewW * 0.82, viewH],
-            [0, viewH * 0.88, viewW, viewH * 0.8],
-            [0, viewH * 0.92, viewW, viewH * 0.51],
-            [viewW * 0.16, 0, viewW, viewH],
-            [viewW * 0.22, 0, viewW, viewH * 0.73],
-            [viewW * 0.3, 0, viewW, viewH * 0.48],
-            [viewW * 0.73, 0, viewW, viewH],
-            [viewW, 0, viewW * 0.34, viewH],
-            [viewW, 0, viewW * 0.03, viewH],*/
-           
         ],
         phase: 'lines',
         damage: 35,
         range: 500,
-        knockback: { x: 0, y: 0 },
         cameraX: cx - viewW / 2,
         cameraY: cy - viewH / 2,
         viewWidth: viewW,
         viewHeight: viewH,
         shards: [],
-        visibleLines: 0  // ADD THIS LINE
+        visibleLines: 0
     };
     
-// Store effect in character
+    // Store effect in character
     character.judgementCutEffect = effect;
     
-    // NEW: Schedule first three lines to appear one by one
+    //This is the line where the white lines appears one by onehahah
     for (let i = 0; i < 7; i++) {
         setTimeout(() => {
             if (character.judgementCutEffect && character.judgementCutEffect.phase === 'lines') {
@@ -378,7 +358,7 @@ judgementCut: function(character, costPoints = 0) {
         }, i * JUDGEMENT_CUT_CONSTANTS.FIRST_THREE_INTERVAL);
     }
     
-    // NEW: Schedule remaining lines to appear all at once after delay
+    // lines to appear all at once after delay
     setTimeout(() => {
         if (character.judgementCutEffect && character.judgementCutEffect.phase === 'lines') {
             character.judgementCutEffect.visibleLines = effect.lines.length;
@@ -465,19 +445,20 @@ judgementCut: function(character, costPoints = 0) {
                     g: 1.10 + Math.random()*0.2,
                     angle: (Math.random()-0.5)*0.2,
                     vangle: (Math.random()-0.5)*0.12 + (cx-effect.viewWidth/2)*0.0003
-                    
                 };
             });
         }
-    }, JUDGEMENT_CUT_CONSTANTS.LINE_DISPLAY_DURATION);  // 2000ms
+    }, JUDGEMENT_CUT_CONSTANTS.LINE_DISPLAY_DURATION);
     
-    // STEP 3: After additional delay, start shard animation
+    //shard anim
     setTimeout(() => {
         if (character.judgementCutEffect) {
             character.judgementCutEffect.phase = 'slide';
             character.judgementCutEffect.startTime = performance.now();
+            
+           
         }
-    }, JUDGEMENT_CUT_CONSTANTS.LINE_DISPLAY_DURATION + 500);  // 2500ms total (lines + 500ms pause)
+    }, JUDGEMENT_CUT_CONSTANTS.LINE_DISPLAY_DURATION + 500);
     
     // Deal damage to opponents in range (immediate)
     for (let i = 0; i < players.length; i++) {
@@ -1425,6 +1406,7 @@ abilities: {
     keyPress: function(key) {
         const controls = getControls(this.id);
         if (key === controls.special) {
+             pauseGame('judgement_cut');
             // Get current camera state
             const { cx, cy, zoom } = getCamera();
             
@@ -1495,6 +1477,10 @@ abilities: {
               setTimeout(() => {
                 AbilityLibrary.judgementCut(this);
             }, 2000);
+            setTimeout(()=>{
+                 // RESUME THE GAME when shards start falling
+            resumeGame();
+            },12000)
         }
     },
     
