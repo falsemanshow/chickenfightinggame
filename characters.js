@@ -1,14 +1,14 @@
 // 1. Base Character System (Keep your existing system)
 //characters.js
 const JUDGEMENT_CUT_CONSTANTS = {
-    SLIDE_DURATION: 5000,
-    SLIDE_SPEED: 1,
-    FALL_INITIAL_VY: -7,
-    FALL_VX_RANGE: 3,
-    LINE_DISPLAY_DURATION: 1100,
-    LINE_APPEAR_INTERVAL: 50,  // Time between each line appearing (ms)
-    FIRST_THREE_INTERVAL: 50,  // Slower interval for first 3 lines
-    REMAINING_LINES_DELAY: 200  // Extra delay before remaining lines appear together
+    SLIDE_DURATION: 5000,        // How long shards slide before falling (5 seconds)
+    SLIDE_SPEED: 2,              // Speed of the sliding animation
+    FALL_INITIAL_VY: -7,         // Initial vertical velocity when shards start falling
+    FALL_VX_RANGE: 3,            // Range of horizontal velocity for falling shards
+    LINE_DISPLAY_DURATION: 1100, // How long the white lines are displayed
+    LINE_APPEAR_INTERVAL: 50,    // Time between each line appearing
+    FIRST_THREE_INTERVAL: 50,    // Interval for first 3 lines
+    REMAINING_LINES_DELAY: 200   // Extra delay before remaining lines appear
 };
 
 const CharacterSystem = {
@@ -1480,7 +1480,7 @@ abilities: {
             setTimeout(()=>{
                  // RESUME THE GAME when shards start falling
             resumeGame();
-            },12000)
+            },9500)
         }
     },
     
