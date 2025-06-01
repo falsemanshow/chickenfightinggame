@@ -3,64 +3,64 @@ CharacterSystem.register('vergil', {
     name: "Vergil",
     color: "#4a90e2", // Fallback color
     
-    // ADD THIS: Sprite configurations for Vergil
-    sprites: {
-        idle: {
-            src: "characters/assets/vergil_idle.png", // Your Vergil idle sprite sheet
-            frameCount: 1,
-            frameDuration: 200,
-            frameWidth: 80,
-            frameHeight: 80,
-            loop: true,
-            autoPlay: true
-        },
-        
-        teleporting: {
-            src: "characters/assets/vergil_teleport.png", // Vergil teleport animation
-            frameCount: 4,
-            frameDuration: 100,
-            frameWidth: 64,
-            frameHeight: 64,
-            loop: true,
-            autoPlay: false
-        },
-        
-        concentrating: {
-            src: "characters/assets/vergil_concentrate.png", // For Judgement Cut preparation
-            frameCount: 3,
-            frameDuration: 150,
-            frameWidth: 64,
-            frameHeight: 64,
-            loop: true,
-            autoPlay: false
-        },
-        
-        slash: {
-            src: "characters/assets/vergil_slash.png", // Attack animation
-            frameCount: 5,
-            frameDuration: 120,
-            frameWidth: 64,
-            frameHeight: 64,
-            loop: false,
-            autoPlay: false,
-            onComplete: function() {
-                // Return to idle after slash
-                if (this.setAnimation) {
-                    this.setAnimation('idle');
-                }
+
+    //Sprite configurations for Vergil with placeholders
+sprites: {
+    idle: {
+        src: createPlaceholderSprite("#4a90e2", 1, PLAYER_SIZE, PLAYER_SIZE), // Use placeholder
+        frameCount: 1,
+        frameDuration: 200,
+        frameWidth: PLAYER_SIZE,
+        frameHeight: PLAYER_SIZE,
+        loop: true,
+        autoPlay: true
+    },
+    
+    teleporting: {
+        src: createPlaceholderSprite("#1a1a2e", 4, PLAYER_SIZE, PLAYER_SIZE), // Use placeholder
+        frameCount: 4,
+        frameDuration: 100,
+        frameWidth: PLAYER_SIZE,
+        frameHeight: PLAYER_SIZE,
+        loop: true,
+        autoPlay: false
+    },
+    
+    concentrating: {
+        src: createPlaceholderSprite("#6a4c93", 3, PLAYER_SIZE, PLAYER_SIZE), // Use placeholder
+        frameCount: 3,
+        frameDuration: 150,
+        frameWidth: PLAYER_SIZE,
+        frameHeight: PLAYER_SIZE,
+        loop: true,
+        autoPlay: false
+    },
+    
+    slash: {
+        src: createPlaceholderSprite("#ff6b6b", 5, PLAYER_SIZE, PLAYER_SIZE), // Use placeholder
+        frameCount: 5,
+        frameDuration: 120,
+        frameWidth: PLAYER_SIZE,
+        frameHeight: PLAYER_SIZE,
+        loop: false,
+        autoPlay: false,
+        onComplete: function() {
+            if (this.setAnimation) {
+                this.setAnimation('idle');
             }
-        },
-        
-        run: {
-            src: "characters/assets/vergil_run.png", // Running animation
-            frameCount: 8,
-            frameDuration: 100,
-            frameWidth: 64,
-            frameHeight: 64,
-            loop: true,
-            autoPlay: false
         }
     },
+    
+    run: {
+        src: createPlaceholderSprite("#3498db", 8, PLAYER_SIZE, PLAYER_SIZE), // Use placeholder
+        frameCount: 8,
+        frameDuration: 100,
+        frameWidth: PLAYER_SIZE,
+        frameHeight: PLAYER_SIZE,
+        loop: true,
+        autoPlay: false
+    }
+},
     
     init: function(player) {
         player.judgementCutCooldown = 0;
@@ -196,88 +196,97 @@ CharacterSystem.register('vergil', {
         }
     },
      
-    render: function(ctx) {
-        // MODIFY THIS: The animation system will now handle sprite rendering
-        // This render method is now for additional effects only
-        
-        // Draw teleport trail first (behind character)
-        if (this.teleportTrail && this.teleportTrail.duration > 0) {
-            ctx.save();
-            ctx.globalAlpha = this.teleportTrail.alpha;
-            ctx.fillStyle = "#1a1a2e";
-            ctx.fillRect(this.teleportTrail.x, this.teleportTrail.y, this.w, this.h);
-            
-            ctx.strokeStyle = "#4a90e2";
-            ctx.lineWidth = 2;
-            ctx.strokeRect(this.teleportTrail.x, this.teleportTrail.y, this.w, this.h);
-            ctx.restore();
-        }
+render: function(ctx) {
+    // FIRST: Draw the main sprite using the animation system
+    if (this.animations) {
+        this.animations.draw(ctx, this.x, this.y, this.facing);
+    } else {
+        // Fallback to colored rectangle
+        ctx.fillStyle = this.color;
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 3;
+        ctx.fillRect(this.x, this.y, this.w, this.h);
+        ctx.strokeRect(this.x, this.y, this.w, this.h);
+    }
 
-        // Draw teleport jump trail
-        if (this.teleportJumpTrail && this.teleportJumpTrail.duration > 0) {
-            ctx.save();
-            ctx.globalAlpha = this.teleportJumpTrail.alpha;
-            ctx.fillStyle = "#0f0f1a";
-            ctx.fillRect(this.teleportJumpTrail.x, this.teleportJumpTrail.y, this.w, this.h);
-            
+    // THEN: Draw teleport trail (behind character)
+    if (this.teleportTrail && this.teleportTrail.duration > 0) {
+        ctx.save();
+        ctx.globalAlpha = this.teleportTrail.alpha;
+        ctx.fillStyle = "#1a1a2e";
+        ctx.fillRect(this.teleportTrail.x, this.teleportTrail.y, this.w, this.h);
+        
+        ctx.strokeStyle = "#4a90e2";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(this.teleportTrail.x, this.teleportTrail.y, this.w, this.h);
+        ctx.restore();
+    }
+
+    // Draw teleport jump trail
+    if (this.teleportJumpTrail && this.teleportJumpTrail.duration > 0) {
+        ctx.save();
+        ctx.globalAlpha = this.teleportJumpTrail.alpha;
+        ctx.fillStyle = "#0f0f1a";
+        ctx.fillRect(this.teleportJumpTrail.x, this.teleportJumpTrail.y, this.w, this.h);
+        
+        ctx.strokeStyle = "#6a4c93";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(this.teleportJumpTrail.x, this.teleportJumpTrail.y, this.w, this.h);
+        
+        for (let i = 0; i < 3; i++) {
             ctx.strokeStyle = "#6a4c93";
-            ctx.lineWidth = 2;
-            ctx.strokeRect(this.teleportJumpTrail.x, this.teleportJumpTrail.y, this.w, this.h);
-            
-            for (let i = 0; i < 3; i++) {
-                ctx.strokeStyle = "#6a4c93";
-                ctx.lineWidth = 1;
-                ctx.globalAlpha = this.teleportJumpTrail.alpha * 0.5;
-                ctx.beginPath();
-                ctx.moveTo(this.teleportJumpTrail.x + this.w/2 - 10 + i*10, this.teleportJumpTrail.y + this.h);
-                ctx.lineTo(this.teleportJumpTrail.x + this.w/2 - 10 + i*10, this.teleportJumpTrail.y + this.h + 15);
-                ctx.stroke();
-            }
-            ctx.restore();
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = this.teleportJumpTrail.alpha * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(this.teleportJumpTrail.x + this.w/2 - 10 + i*10, this.teleportJumpTrail.y + this.h);
+            ctx.lineTo(this.teleportJumpTrail.x + this.w/2 - 10 + i*10, this.teleportJumpTrail.y + this.h + 15);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+    
+    // Apply teleport transparency to the sprite if needed
+    if (this.isTeleporting || this.teleportAlpha < 1.0) {
+        ctx.save();
+        ctx.globalAlpha = this.teleportAlpha;
+        
+        // Re-draw the sprite with transparency
+        if (this.animations) {
+            this.animations.draw(ctx, this.x, this.y, this.facing);
         }
         
-        // IMPORTANT: The main character sprite is now drawn by the animation system
-        // We only need to draw additional effects here
-        
-        // Apply teleport transparency to the sprite
-        if (this.isTeleporting || this.teleportAlpha < 1.0) {
-            ctx.save();
-            ctx.globalAlpha = this.teleportAlpha;
-        }
-        
-        // Add teleport effect particles when teleporting
-        if ((this.isTeleporting && this.dash > 0) || this.isTeleportJumping) {
-            ctx.save();
-            // Draw shadow particles around Vergil
-            for (let i = 0; i < 4; i++) {
-                const offsetX = (Math.random() - 0.5) * 25;
-                const offsetY = (Math.random() - 0.5) * 25;
-                ctx.globalAlpha = 0.4 * Math.random();
-                
-                if (this.isTeleportJumping) {
-                    ctx.fillStyle = "#6a4c93";
-                } else {
-                    ctx.fillStyle = "#1a1a2e";
-                }
-                
-                ctx.fillRect(this.x + offsetX, this.y + offsetY, 6, 6);
-            }
+        ctx.restore();
+    }
+    
+    // Add teleport effect particles when teleporting
+    if ((this.isTeleporting && this.dash > 0) || this.isTeleportJumping) {
+        ctx.save();
+        // Draw shadow particles around Vergil
+        for (let i = 0; i < 4; i++) {
+            const offsetX = (Math.random() - 0.5) * 25;
+            const offsetY = (Math.random() - 0.5) * 25;
+            ctx.globalAlpha = 0.4 * Math.random();
             
             if (this.isTeleportJumping) {
-                for (let i = 0; i < 2; i++) {
-                    const offsetX = (Math.random() - 0.5) * 15;
-                    ctx.globalAlpha = 0.3;
-                    ctx.fillStyle = "#9d4edd";
-                    ctx.fillRect(this.x + this.w/2 + offsetX, this.y + this.h + Math.random() * 10, 4, 8);
-                }
+                ctx.fillStyle = "#6a4c93";
+            } else {
+                ctx.fillStyle = "#1a1a2e";
             }
-            ctx.restore();
+            
+            ctx.fillRect(this.x + offsetX, this.y + offsetY, 6, 6);
         }
         
-        if (this.isTeleporting || this.teleportAlpha < 1.0) {
-            ctx.restore();
+        if (this.isTeleportJumping) {
+            for (let i = 0; i < 2; i++) {
+                const offsetX = (Math.random() - 0.5) * 15;
+                ctx.globalAlpha = 0.3;
+                ctx.fillStyle = "#9d4edd";
+                ctx.fillRect(this.x + this.w/2 + offsetX, this.y + this.h + Math.random() * 10, 4, 8);
+            }
         }
-    },
+        ctx.restore();
+    }
+},
      
     abilities: {
         keyPress: function(key) {
