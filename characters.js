@@ -115,10 +115,10 @@ const CharacterSystem = {
         };
         
         // Apply render method
-        player.render = character.render || function(ctx) {
-            if (this.animations) {
-                this.animations.draw(ctx, this.x, this.y, this.facing);
-            } else {
+    player.render = character.render || function(ctx) {
+    if (this.animations) {
+        this.animations.draw(ctx, this.x, this.y, this.facing);  // ✅ This works!
+    } else {
                 ctx.fillStyle = this.color;
                 ctx.strokeStyle = "#fff";
                 ctx.lineWidth = 3;
@@ -149,4 +149,4 @@ const BaseCharacter = {
 
 // const abilitylibrary exist here before
 
-// registered Characters lied here before
+// 4. Character Definitions (Updated with new structure)
