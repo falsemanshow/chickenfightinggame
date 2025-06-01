@@ -1235,6 +1235,8 @@ CharacterSystem.register('vergil', {
     player.snapCanvas = null;
     player.snapCtx = null;
     player.judgementCutEffect = null;
+player.isChargingJudgementCut = false;
+player.judgementCutChargeTime = 0;
     
     // NEW: Add teleport dash properties
     player.teleportTrail = null;
@@ -1367,6 +1369,36 @@ if (this.teleportJumpTrail && this.teleportJumpTrail.duration > 0) {
     ctx.lineWidth = 3;
     ctx.fillRect(this.x, this.y, this.w, this.h);
     ctx.strokeRect(this.x, this.y, this.w, this.h);
+
+    // NEW: Add charging effect for Judgement Cut
+if (this.isChargingJudgementCut) {
+    ctx.save();
+    ctx.globalAlpha = 0.8;
+    const intensity = Math.sin(performance.now() / 100) * 0.3 + 0.7;
+    
+    // Blue charging particles around Vergil
+    for (let i = 0; i < 5; i++) {
+        const angle = (performance.now() / 500 + i * (Math.PI * 2 / 5)) % (Math.PI * 2);
+        const radius = 25 + 10 * Math.sin(performance.now() / 200 + i);
+        const x = this.x + this.w/2 + Math.cos(angle) * radius;
+        const y = this.y + this.h/2 + Math.sin(angle) * radius;
+        
+        ctx.fillStyle = `hsl(${220 + i * 10}, 100%, ${50 + i * 10}%)`;
+        ctx.beginPath();
+        ctx.arc(x, y, 3 + 2 * Math.sin(performance.now() / 150 + i) * intensity, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // Add power charging aura
+    ctx.strokeStyle = "#4a90e2";
+    ctx.lineWidth = 2 + 3 * Math.sin(performance.now() / 100);
+    ctx.globalAlpha = 0.6;
+    ctx.beginPath();
+    ctx.arc(this.x + this.w/2, this.y + this.h/2, 
+           this.w * 0.8 + 10 * Math.sin(performance.now() / 150), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+}
     
     // NEW: Add teleport effect particles when teleporting
    // NEW: Add teleport effect particles when teleporting or jumping
@@ -1403,137 +1435,162 @@ if ((this.isTeleporting && this.dash > 0) || this.isTeleportJumping) {
 },
     
 abilities: {
-    keyPress: function(key) {
+    // NEW: Hold and release mechanism for Judgement Cut
+    keyHold: function(key, duration) {
         const controls = getControls(this.id);
-        if (key === controls.special) {
-             pauseGame('judgement_cut');
-            // Get current camera state
-            const { cx, cy, zoom } = getCamera();
-            
-            // Calculate camera view dimensions
-            const viewW = canvas.width / zoom;
-            const viewH = canvas.height / zoom;
-            
-            // Create snapshot canvas to match the camera view size
-            if (!this.snapCanvas) {
-                this.snapCanvas = document.createElement('canvas');
-                this.snapCtx = this.snapCanvas.getContext('2d');
+        
+        if (key === controls.special && duration > 1000) {
+            if (!this.chargingLogged[key]) {
+                this.isChargingJudgementCut = true;
+                this.judgementCutChargeTime = duration;
+                log(`${this.name} is charging Judgement Cut...`);
+                this.chargingLogged[key] = true;
             }
-            
-            // Set snapshot canvas to camera view size
-            this.snapCanvas.width = viewW;
-            this.snapCanvas.height = viewH;
-            
-            // Calculate what area of the world is visible
-            const viewLeft = cx - viewW / 2;
-            const viewTop = cy - viewH / 2;
-            
-            // Take snapshot of only the visible camera area
-            this.snapCtx.clearRect(0, 0, viewW, viewH);
-            this.snapCtx.save();
-            
-            // Translate to show only the camera view area
-            this.snapCtx.translate(-viewLeft, -viewTop);
-            
-            // BACKGROUND
-            this.snapCtx.fillStyle = "#181c24";
-            this.snapCtx.fillRect(0, 0, WIDTH, HEIGHT);
-            this.snapCtx.fillStyle = "#6d4c41";
-            this.snapCtx.fillRect(0, FLOOR, WIDTH, HEIGHT - FLOOR);
+        }
+    },
 
-            // PLATFORMS
-            platforms.forEach(p => {
-                this.snapCtx.fillStyle = "#ffd54f";
-                this.snapCtx.fillRect(p.x, p.y, p.w, PLATFORM_HEIGHT);
-                this.snapCtx.strokeStyle = "#ffb300";
-                this.snapCtx.lineWidth = 3;
-                this.snapCtx.strokeRect(p.x, p.y, p.w, PLATFORM_HEIGHT);
-            });
+    keyRelease: function(key, duration) {
+        const controls = getControls(this.id);
+        
+        if (key === controls.special && this.isChargingJudgementCut) {
+            this.isChargingJudgementCut = false;
+            this.judgementCutChargeTime = 0;
+            
+            if (duration > 1500) { // Must hold for at least 1.5 seconds
+                // Execute Judgement Cut
+                pauseGame('judgement_cut');
+                
+                // Get current camera state
+                const { cx, cy, zoom } = getCamera();
+                
+                // Calculate camera view dimensions
+                const viewW = canvas.width / zoom;
+                const viewH = canvas.height / zoom;
+                
+                // Create snapshot canvas to match the camera view size
+                if (!this.snapCanvas) {
+                    this.snapCanvas = document.createElement('canvas');
+                    this.snapCtx = this.snapCanvas.getContext('2d');
+                }
+                
+                // Set snapshot canvas to camera view size
+                this.snapCanvas.width = viewW;
+                this.snapCanvas.height = viewH;
+                
+                // Calculate what area of the world is visible
+                const viewLeft = cx - viewW / 2;
+                const viewTop = cy - viewH / 2;
+                
+                // Take snapshot of only the visible camera area
+                this.snapCtx.clearRect(0, 0, viewW, viewH);
+                this.snapCtx.save();
+                
+                // Translate to show only the camera view area
+                this.snapCtx.translate(-viewLeft, -viewTop);
+                
+                // BACKGROUND
+                this.snapCtx.fillStyle = "#181c24";
+                this.snapCtx.fillRect(0, 0, WIDTH, HEIGHT);
+                this.snapCtx.fillStyle = "#6d4c41";
+                this.snapCtx.fillRect(0, FLOOR, WIDTH, HEIGHT - FLOOR);
 
-            // PLAYERS
-            for (let p of players) {
-                if (!p.alive) continue;
+                // PLATFORMS
+                platforms.forEach(p => {
+                    this.snapCtx.fillStyle = "#ffd54f";
+                    this.snapCtx.fillRect(p.x, p.y, p.w, PLATFORM_HEIGHT);
+                    this.snapCtx.strokeStyle = "#ffb300";
+                    this.snapCtx.lineWidth = 3;
+                    this.snapCtx.strokeRect(p.x, p.y, p.w, PLATFORM_HEIGHT);
+                });
+
+                // PLAYERS
+                for (let p of players) {
+                    if (!p.alive) continue;
+                    
+                    // Draw shadow
+                    this.snapCtx.globalAlpha = 0.18;
+                    this.snapCtx.beginPath();
+                    this.snapCtx.ellipse(p.x + p.w / 2, p.y + p.h - 4, p.w / 2.5, 7, 0, 0, 2 * Math.PI);
+                    this.snapCtx.fillStyle = "#000";
+                    this.snapCtx.fill();
+                    this.snapCtx.globalAlpha = 1;
+                    
+                    // Draw player body
+                    this.snapCtx.fillStyle = p.color;
+                    this.snapCtx.strokeStyle = "#fff";
+                    this.snapCtx.lineWidth = 3;
+                    this.snapCtx.fillRect(p.x, p.y, p.w, p.h);
+                    this.snapCtx.strokeRect(p.x, p.y, p.w, p.h);
+                }
                 
-                // Draw shadow
-                this.snapCtx.globalAlpha = 0.18;
-                this.snapCtx.beginPath();
-                this.snapCtx.ellipse(p.x + p.w / 2, p.y + p.h - 4, p.w / 2.5, 7, 0, 0, 2 * Math.PI);
-                this.snapCtx.fillStyle = "#000";
-                this.snapCtx.fill();
-                this.snapCtx.globalAlpha = 1;
+                this.snapCtx.restore();
                 
-                // Draw player body
-                this.snapCtx.fillStyle = p.color;
-                this.snapCtx.strokeStyle = "#fff";
-                this.snapCtx.lineWidth = 3;
-                this.snapCtx.fillRect(p.x, p.y, p.w, p.h);
-                this.snapCtx.strokeRect(p.x, p.y, p.w, p.h);
+                // Trigger the effect after 2 seconds
+                setTimeout(() => {
+                    AbilityLibrary.judgementCut(this);
+                }, 2000);
+                
+                setTimeout(() => {
+                    // RESUME THE GAME when shards start falling
+                    resumeGame();
+                }, 9500);
+                
+                log(`${this.name} unleashes JUDGEMENT CUT!`);
+            } else {
+                log(`${this.name} needs to charge longer for Judgement Cut!`);
             }
-            
-            this.snapCtx.restore();
-            
-            // ADD DELAY HERE - Trigger the effect after 2 seconds
-          
-              setTimeout(() => {
-                AbilityLibrary.judgementCut(this);
-            }, 2000);
-            setTimeout(()=>{
-                 // RESUME THE GAME when shards start falling
-            resumeGame();
-            },9500)
         }
     },
     
-    // NEW: Add teleport dash function
-   keyPresses: function(key, count) {
-    const controls = getControls(this.id);
-    
-    // Teleport dash on double tap left/right
-    if ((key === controls.left || key === controls.right) && count === 2 && this.dashCooldown === 0) {
-        const direction = key === controls.right ? 1 : -1;
+    // Keep existing teleport dash function
+    keyPresses: function(key, count) {
+        const controls = getControls(this.id);
         
-        // Create teleport trail at current position
-        this.teleportTrail = {
-            x: this.x,
-            y: this.y,
-            duration: 15,  // Shorter than fire trail
-            alpha: 0.8
-        };
+        // Teleport dash on double tap left/right
+        if ((key === controls.left || key === controls.right) && count === 2 && this.dashCooldown === 0) {
+            const direction = key === controls.right ? 1 : -1;
+            
+            // Create teleport trail at current position
+            this.teleportTrail = {
+                x: this.x,
+                y: this.y,
+                duration: 15,  // Shorter than fire trail
+                alpha: 0.8
+            };
+            
+            // Start teleport effect
+            this.isTeleporting = true;
+            this.teleportAlpha = 0.3;  // Make Vergil semi-transparent
+            
+            // Enhanced dash with teleport distance
+            this.vx = direction * DASH_SPEED *1.2;  // 50% faster than normal dash
+            this.dash = DASH_FRAMES;
+            this.dashCooldown = DASH_COOLDOWN;
+            
+            log(`${this.name} teleports through the shadows!`);
+        }
         
-        // Start teleport effect
-        this.isTeleporting = true;
-        this.teleportAlpha = 0.3;  // Make Vergil semi-transparent
-        
-        // Enhanced dash with teleport distance
-        this.vx = direction * DASH_SPEED *1.2;  // 50% faster than normal dash
-        this.dash = DASH_FRAMES;
-        this.dashCooldown = DASH_COOLDOWN;
-        
-        log(`${this.name} teleports through the shadows!`);
+        // Teleport jump on double tap up
+        if (key === controls.up && count === 2 && this.teleportJumpCooldown === 0) {
+            // Create teleport trail at current position (same as dash)
+            this.teleportTrail = {
+                x: this.x,
+                y: this.y,
+                duration: 15,
+                alpha: 0.8
+            };
+            
+            // Start teleport effect (same as dash)
+            this.isTeleporting = true;
+            this.teleportAlpha = 0.3;
+            
+            // Enhanced jump
+            this.vy = -JUMP_VEL * 1.1;
+            this.jumps++;
+            this.teleportJumpCooldown = 60;
+            
+            log(`${this.name} teleports upward!`);
+        }
     }
-    
-    // NEW: Teleport jump on double tap up
-   // NEW: Teleport jump on double tap up
-if (key === controls.up && count === 2 && this.teleportJumpCooldown === 0) {
-    // Create teleport trail at current position (same as dash)
-    this.teleportTrail = {
-        x: this.x,
-        y: this.y,
-        duration: 15,
-        alpha: 0.8
-    };
-    
-    // Start teleport effect (same as dash)
-    this.isTeleporting = true;
-    this.teleportAlpha = 0.3;
-    
-    // Enhanced jump
-    this.vy = -JUMP_VEL * 1.1;
-    this.jumps++;
-    this.teleportJumpCooldown = 60;
-    
-    log(`${this.name} teleports upward!`);
-}
-}
 }
 });
